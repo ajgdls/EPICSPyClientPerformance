@@ -68,7 +68,7 @@ IOC running on Intel(R) Xeon(R) CPU E5-2430L 0 @ 2.00GHz (12 core)
 Client running on Intel(R) Xeon(R) CPU E5-1630 v3 @ 3.70GHz (4 core)
 Python 3.8
 
-========  ========  =======  =======  ========  ========
+========  ========  ========  =======  =======  ========
 Client Tests
 --------------------------------------------------------
 Client    Version   Rate(Hz)  Records  Samples  CPU(%)
