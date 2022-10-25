@@ -58,3 +58,25 @@ Or if it is a commandline tool then you might put some example commands here::
     when included in index.rst
 
 See https://ajgdls.github.io/EPICSPyClientPerformance for more detailed documentation.
+
+Example Test Result
+===================
+
+Test monitoring 100 records at 10 Hz, collecting 1000 Samples.
+
+IOC running on Intel(R) Xeon(R) CPU E5-2430L 0 @ 2.00GHz (12 core)
+Client running on Intel(R) Xeon(R) CPU E5-1630 v3 @ 3.70GHz (4 core)
+Python 3.8
+
+========  ========  =======  =======  ========  ========
+Client Tests
+--------------------------------------------------------
+Client    Version   Rate(Hz)  Records  Samples  CPU(%)
+========  ========  ========  =======  =======  ========
+pyepics   3.5.1     10        100      1000     4.7
+caproto   0.8.1     10        100      1000     9.4
+aioca     1.4       10        100      1000     10.2
+p4p       4.1.0     10        100      1000     11.7
+pvapy     5.1.0     10        100      1000     3.2
+cothread  2.18.1    10        100      1000     3.0
+========  ========  ========  =======  =======  ========
