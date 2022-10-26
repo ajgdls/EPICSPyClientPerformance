@@ -1,10 +1,10 @@
 EPICSPyClientPerformance
 ===========================
 
-A set of performance tests for multiple Python EPICS clients
+A set of performance tests for multiple Python EPICS clients.
 
-
-|code_ci| |docs_ci| |coverage| |pypi_version| |license|
+The CPU usage of the process is recorded whilst monitoring
+a set of EPICS records.
 
 
 Installation
