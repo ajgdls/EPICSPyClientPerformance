@@ -1,63 +1,94 @@
 EPICSPyClientPerformance
 ===========================
 
+A set of performance tests for multiple Python EPICS clients
+
+
 |code_ci| |docs_ci| |coverage| |pypi_version| |license|
 
-.. note::
 
-    This project contains template code only. For documentation on how to
-    adopt this skeleton project see
-    https://ajgdls.github.io/EPICSPyClientPerformance-cli
+Installation
+============
 
-This is where you should write a short paragraph that describes what your module does,
-how it does it, and why people should use it.
+These tests compile and run with Python 3.8+
 
-============== ==============================================================
-PyPI           ``pip install EPICSPyClientPerformance``
-Source code    https://github.com/ajgdls/EPICSPyClientPerformance
-Documentation  https://ajgdls.github.io/EPICSPyClientPerformance
-Releases       https://github.com/ajgdls/EPICSPyClientPerformance/releases
-============== ==============================================================
+To install
 
-This is where you should put some images or code snippets that illustrate
-some relevant examples. If it is a library then you might put some
-introductory code here:
+.. code-block:: bash
 
-.. code-block:: python
+    git clone https://github.com/ajgdls/EPICSPyClientPerformance
+    cd EPICSPyClientPerformance
+    python -m venv venv   #(must be python 3.8)
+    source venv/bin/activate
+    pip install --upgrade pip
+    pip install -e .[dev]
 
-    from EPICSPyClientPerformance import __version__
 
-    print(f"Hello EPICSPyClientPerformance {__version__}")
+Execution
+=========
 
-Or if it is a commandline tool then you might put some example commands here::
+The test creates a set of monitors for the chosen client type to monitor a
+set of calcout records that are incrementing their value by 1 at a rate of
+10 Hz.  An example IOC that contains the required records can be started
+with the following command:
 
-    $ python -m EPICSPyClientPerformance --version
 
-.. |code_ci| image:: https://github.com/ajgdls/EPICSPyClientPerformance/actions/workflows/code.yml/badge.svg?branch=main
-    :target: https://github.com/ajgdls/EPICSPyClientPerformance/actions/workflows/code.yml
-    :alt: Code CI
+.. code-block:: bash
 
-.. |docs_ci| image:: https://github.com/ajgdls/EPICSPyClientPerformance/actions/workflows/docs.yml/badge.svg?branch=main
-    :target: https://github.com/ajgdls/EPICSPyClientPerformance/actions/workflows/docs.yml
-    :alt: Docs CI
+    example_ioc -h
+    usage: example_ioc [-h] [--version] [--debug {CRITICAL,ERROR,WARNING,INFO,DEBUG,NOTSET}] [-r RECORDS] [-p PREFIX]
 
-.. |coverage| image:: https://codecov.io/gh/ajgdls/EPICSPyClientPerformance/branch/main/graph/badge.svg
-    :target: https://codecov.io/gh/ajgdls/EPICSPyClientPerformance
-    :alt: Test Coverage
+    optional arguments:
+    -h, --help            show this help message and exit
+    --version             show program's version number and exit
+    --debug {CRITICAL,ERROR,WARNING,INFO,DEBUG,NOTSET}
+                            Set the debug level (INFO)
+    -r RECORDS, --records RECORDS
+                            Number of records to create (1000)
+    -p PREFIX, --prefix PREFIX
+                            Record name prefix (TEST:)
 
-.. |pypi_version| image:: https://img.shields.io/pypi/v/EPICSPyClientPerformance.svg
-    :target: https://pypi.org/project/EPICSPyClientPerformance
-    :alt: Latest PyPI version
 
-.. |license| image:: https://img.shields.io/badge/License-Apache%202.0-blue.svg
-    :target: https://opensource.org/licenses/Apache-2.0
-    :alt: Apache License
+The IOC will start with the number of records specified and each record
+will count up at a rate of 10 Hz.  The severity of each record will
+immediately fall into MINOR alarm.
 
-..
-    Anything below this line is used when viewing README.rst and will be replaced
-    when included in index.rst
 
-See https://ajgdls.github.io/EPICSPyClientPerformance for more detailed documentation.
+Once the IOC is operational run the client with the following command:
+
+
+.. code-block:: bash
+
+    client_test -h
+    usage: client_test [-h] [--version] [--debug {CRITICAL,ERROR,WARNING,INFO,DEBUG,NOTSET}] [-r RECORDS] [-p PREFIX] [-s SAMPLES]
+                    [-c {pyepics,caproto,aioca,p4p,pvapy,cothread}]
+
+    optional arguments:
+    -h, --help            show this help message and exit
+    --version             show program's version number and exit
+    --debug {CRITICAL,ERROR,WARNING,INFO,DEBUG,NOTSET}
+                            Set the debug level (INFO)
+    -r RECORDS, --records RECORDS
+                            Number of PVs to monitor (1)
+    -p PREFIX, --prefix PREFIX
+                            Record name prefix (TEST:CALC)
+    -s SAMPLES, --samples SAMPLES
+                            Number of samples per monitor to collect (100)
+    -c {pyepics,caproto,aioca,p4p,pvapy,cothread}, --client {pyepics,caproto,aioca,p4p,pvapy,cothread}
+                            Client type to test
+
+
+The test script will create monitors (1 monitor on each record up to the
+number of specified records).  For each monitor update the value, severity
+and timestamp of the update is recorded.  While the test is active the CPU
+usage of the process is monitored and snapshots recorded.
+
+Once all samples from all monitors have been collected then the test stops
+monitoring CPU and calculates the average.  Finally checks are made on each
+of the samples collected to ensure no expected values are missing, no
+timestamps are unexpected (in the past, not updated) and the severity of
+MINOR has been recorded with each sample.
+
 
 Example Test Result
 ===================
@@ -65,7 +96,19 @@ Example Test Result
 Test monitoring 100 records at 10 Hz, collecting 1000 Samples.
 
 IOC running on Intel(R) Xeon(R) CPU E5-2430L 0 @ 2.00GHz (12 core)
+
+.. code-block:: bash
+
+    example_ioc -r 100
+
+
 Client running on Intel(R) Xeon(R) CPU E5-1630 v3 @ 3.70GHz (4 core)
+
+.. code-block:: bash
+
+    client_test -r 100 -s 1000 -c cothread
+
+
 Python 3.8
 
 ========  ========  ========  =======  =======  ========
@@ -73,10 +116,10 @@ Client Tests
 --------------------------------------------------------
 Client    Version   Rate(Hz)  Records  Samples  CPU(%)
 ========  ========  ========  =======  =======  ========
-pyepics   3.5.1     10        100      1000     4.7
-caproto   0.8.1     10        100      1000     9.4
+pyepics   3.5.1     10        100      1000     4.4
+caproto   0.8.1     10        100      1000     8.7
 aioca     1.4       10        100      1000     10.2
 p4p       4.1.0     10        100      1000     11.7
 pvapy     5.1.0     10        100      1000     3.2
-cothread  2.18.1    10        100      1000     3.0
+cothread  2.18.1    10        100      1000     2.8
 ========  ========  ========  =======  =======  ========

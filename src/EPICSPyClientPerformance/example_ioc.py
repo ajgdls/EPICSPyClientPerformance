@@ -1,7 +1,5 @@
 import argparse
-import asyncio
 import logging
-from datetime import datetime, timedelta
 
 from softioc import asyncio_dispatcher, builder, softioc
 from softioc.builder import records
@@ -50,7 +48,12 @@ def main():
     # Create some records
     record_store = []
     for index in range(args.records):
+        # calc record with .1 second scan.  Calculating VAL+1
         calc = records.calc("CALC{:05d}".format(index), CALC="A+1", SCAN=".1 second")
+        # Set the record to fall into MINOR ALARM immediately
+        calc.HIGH = 1.0
+        calc.HSV = "MINOR"
+        # Point the INP field to itself
         calc.INPA = builder.NP(calc)
         record_store.append(calc)
 
