@@ -1,44 +1,31 @@
-import logging
-from aioca import FORMAT_TIME, caget, camonitor, caput, run
 import asyncio
 from threading import Thread
+
+from aioca import FORMAT_TIME, camonitor
 
 from EPICSPyClientPerformance.monitor_client import MonitorClient
 
 
-aioca_client = None
-
-
-# Create the monitor callback
-def aioca_callback(value, index):
-    pv_name = aioca_client.pv_names[index]
-    logging.debug("PV [{}] Value: {}  Timestamp: {}  Severity: {}".format(pv_name, value, value.timestamp, value.severity))
-    aioca_client.add_sample(pv_name, value, value.timestamp, value.severity)
-
-
 class AiocaMonitor(MonitorClient):
     def __init__(self):
-        super(AiocaMonitor, self).__init__()
-        self._subscriptions = []
-        self._running = True
-        self._task = None
-        global aioca_client
-        aioca_client = self
+        super().__init__()
+        self._thread = None
+        self._finished = asyncio.Event()
 
     def create_monitors(self):
-        self._task = Thread(target=self.run_loop)
-        self._task.start()
+        self._thread = Thread(target=asyncio.run, args=(self.run_loop(),))
+        self._thread.start()
 
-    def run_loop(self):
-        asyncio.set_event_loop(asyncio.new_event_loop())
-        run(self.aioca_create_monitors(), forever=False)
+    async def run_loop(self):
+        subscriptions = camonitor(self._pv_names, self.callback, format=FORMAT_TIME)
+        await self._finished.wait()
+        for sub in subscriptions:
+            sub.close()
 
-    async def aioca_create_monitors(self):
-        self._subscriptions = camonitor(self._pv_names, aioca_callback, format=FORMAT_TIME)
-        while self._running:
-            await asyncio.sleep(1)
+    def callback(self, value, index):
+        pv_name = self.pv_names[index]
+        self.add_sample(pv_name, value, value.timestamp, value.severity)
 
     def close(self):
-        for sub in self._subscriptions:
-            sub.close()
-        self._running = False
+        asyncio.get_event_loop().call_soon_threadsafe(self._finished.set())
+        self._thread.join()

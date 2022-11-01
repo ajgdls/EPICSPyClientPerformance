@@ -1,67 +1,35 @@
-
-import logging
 from threading import Thread
-import time
 
 from EPICSPyClientPerformance.monitor_client import MonitorClient
 
 
-cothread_client = None
-
-
-# Create the monitor callback
-def cothread_callback(value, index):
-    pv_name = cothread_client._pv_names[index]
-    logging.debug("PV [{}] Value: {}  Timestamp: {}  Severity: {}".format(
-        pv_name,
-        value,
-        value.timestamp,
-        value.severity
-        ))
-    cothread_client.add_sample(
-        pv_name,
-        value,
-        value.timestamp,
-        value.severity
-        )
-
-
 class CothreadMonitor(MonitorClient):
     def __init__(self):
-        super(CothreadMonitor, self).__init__()
-        self._subscriptions = []
-        self._task = None
-        self._running = True
-        global cothread_client
-        cothread_client = self
-
+        super().__init__()
+        self._thread = None
+        self._finished = None
 
     def create_monitors(self):
-        self._task = Thread(target=self.run_loop)
-        self._task.start()
+        self._thread = Thread(target=self.run_loop)
+        self._thread.start()
 
     def run_loop(self):
+        # Local import of cothread so it doesn't run in the main thread
         import cothread
-        from cothread import Event
-        from cothread.catools import camonitor, caget, FORMAT_TIME
+        from cothread.catools import FORMAT_TIME, camonitor
 
-#    def create_monitors(self):
-        self._event = Event()
-        self._subscriptions = camonitor(self._pv_names, cothread_callback, format=FORMAT_TIME)
-#        for pv_name in self._pv_names:
-            #logging.info("{}".format(caget(pv_name)))
-#            cb = partial(pvapy_callback, pv_name)
-#            c = pvaccess.Channel(pv_name)
-#            c.subscribe(pv_name, cb)
-#            c.startMonitor('field(value,alarm,timeStamp)')
-#            self._subscriptions.append(c)
-        while self._running:
-            cothread.Sleep(1.0)
-#            self._event.Wait()
-        for sub in self._subscriptions:
+        self._finished = cothread.Event()
+        subscriptions = camonitor(self._pv_names, self.callback, format=FORMAT_TIME)
+        self._finished.Wait()
+        for sub in subscriptions:
             sub.close()
-        self._subscriptions = None
-        self._value_store = None
+
+    def callback(self, value, index):
+        pv_name = self._pv_names[index]
+        self.add_sample(pv_name, value, value.timestamp, value.severity)
 
     def close(self):
-        self._running = False
+        import cothread
+
+        cothread.Callback(self._finished.Signal)
+        self._thread.join()

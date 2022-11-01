@@ -1,3 +1,5 @@
+import logging
+
 
 class MonitorClient(object):
     def __init__(self):
@@ -11,25 +13,26 @@ class MonitorClient(object):
         self._samples = samples
         # Build the PV subscription list
         for pv_index in range(records):
-            pv_name = '{}{:05d}'.format(prefix, pv_index)
+            pv_name = "{}{:05d}".format(prefix, pv_index)
             self._pv_names.append(pv_name)
             self._value_store[pv_name] = []
 
         self.create_monitors()
 
     def add_sample(self, pvname, value, timestamp, severity):
+        logging.debug(
+            "PV [{}] Value: {}  Timestamp: {}  Severity: {}".format(
+                pvname, value, timestamp, severity
+            )
+        )
         # Assign value
-        item = {
-            'value': value,
-            'timestamp': timestamp,
-            'severity': severity
-        }
+        item = {"value": value, "timestamp": timestamp, "severity": severity}
         if len(self._value_store[pvname]) < self._samples:
             self._value_store[pvname].append(item)
 
     def close(self):
         pass
-    
+
     @property
     def pv_names(self):
         return self._pv_names
