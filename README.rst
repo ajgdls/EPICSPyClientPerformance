@@ -93,20 +93,20 @@ MINOR has been recorded with each sample.
 Example Test Result
 ===================
 
-Test monitoring 100 records at 10 Hz, collecting 1000 Samples.
+Test monitoring 1000 records at 10 Hz, collecting 1000 Samples.
 
 IOC running on Intel(R) Xeon(R) CPU E5-2430L 0 @ 2.00GHz (12 core)
 
 .. code-block:: bash
 
-    example_ioc -r 100
+    example_ioc -r 1000
 
 
 Client running on Intel(R) Xeon(R) CPU E5-1630 v3 @ 3.70GHz (4 core)
 
 .. code-block:: bash
 
-    client_test -r 100 -s 1000 -c cothread
+    client_test -r 1000 -s 1000 -c cothread
 
 
 Python 3.8
@@ -116,10 +116,10 @@ Client Tests
 --------------------------------------------------------
 Client    Version   Rate(Hz)  Records  Samples  CPU(%)
 ========  ========  ========  =======  =======  ========
-pyepics   3.5.1     10        100      1000     4.4
-caproto   0.8.1     10        100      1000     8.7
-aioca     1.4       10        100      1000     10.2
-p4p       4.1.0     10        100      1000     11.7
-pvapy     5.1.0     10        100      1000     3.2
-cothread  2.18.1    10        100      1000     2.8
+pyepics   3.5.1     10        1000     1000     45.9
+caproto   0.8.1     10        1000     1000     70.0
+aioca     1.4       10        1000     1000     62.2
+p4p       4.1.0     10        1000     1000     73.8
+pvapy     5.1.0     10        1000     1000     20.9
+cothread  2.18.1    10        1000     1000     22.0
 ========  ========  ========  =======  =======  ========
