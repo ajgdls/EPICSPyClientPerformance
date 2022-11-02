@@ -10,13 +10,14 @@ class AiocaMonitor(MonitorClient):
     def __init__(self):
         super().__init__()
         self._thread = None
-        self._finished = asyncio.Event()
+        self._finished = None
 
     def create_monitors(self):
         self._thread = Thread(target=asyncio.run, args=(self.run_loop(),))
         self._thread.start()
 
     async def run_loop(self):
+        self._finished = asyncio.Event()
         subscriptions = camonitor(self._pv_names, self.callback, format=FORMAT_TIME)
         await self._finished.wait()
         for sub in subscriptions:
