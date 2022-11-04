@@ -15,7 +15,7 @@ class PvapyMonitor(MonitorClient):
             cb = partial(self.callback, pv_name)
             c = pvaccess.Channel(pv_name)
             c.subscribe(pv_name, cb)
-            c.startMonitor("field(value,alarm,timeStamp)")
+            c.startMonitor("record[queueSize=10]field(value,alarm,timeStamp)")
             self._subscriptions.append(c)
 
     def callback(self, pv_name, value):

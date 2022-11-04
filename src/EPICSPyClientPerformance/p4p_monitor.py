@@ -14,7 +14,13 @@ class P4PMonitor(MonitorClient):
     def create_monitors(self):
         for pv_name in self._pv_names:
             cb = partial(self.callback, pv_name)
-            self._subscriptions.append(self._ctxt.monitor(pv_name, cb))
+            self._subscriptions.append(
+                self._ctxt.monitor(
+                    pv_name,
+                    cb,
+                    request="record[queueSize=10]field(value,alarm,timeStamp)"
+                )
+            )
 
     def callback(self, pv_name, value):
         self.add_sample(pv_name, value, value.timestamp, value.severity)
