@@ -19,13 +19,16 @@ class PvapyMonitor(MonitorClient):
             self._subscriptions.append(c)
 
     def callback(self, pv_name, value):
-        self.add_sample(
-            pv_name,
-            value["value"],
-            value["timeStamp"]["secondsPastEpoch"]
-            + float(value["timeStamp"]["nanoseconds"]) / 1000000000,
-            value["alarm"]["severity"],
-        )
+        super().callback(pv_name)
+            
+        if (self.is_active):
+            self.add_sample(
+                pv_name,
+                value["value"],
+                value["timeStamp"]["secondsPastEpoch"]
+                + float(value["timeStamp"]["nanoseconds"]) / 1000000000,
+                value["alarm"]["severity"],
+            )
 
     def close(self):
         for sub, pv_name in zip(self._subscriptions, self._pv_names):

@@ -22,12 +22,15 @@ class CAProtoMonitor(MonitorClient):
             self._subscriptions.append(sub)
 
     def callback(self, sub, value):
-        self.add_sample(
-            sub.pv.name,
-            value.data[0],
-            value.metadata.timestamp,
-            value.metadata.severity,
-        )
+        super().callback(sub.pv.name)
+            
+        if (self.is_active):
+            self.add_sample(
+                sub.pv.name,
+                value.data[0],
+                value.metadata.timestamp,
+                value.metadata.severity,
+            )
 
     def close(self):
         for sub in self._subscriptions:

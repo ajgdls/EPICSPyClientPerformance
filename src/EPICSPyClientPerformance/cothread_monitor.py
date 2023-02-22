@@ -26,7 +26,10 @@ class CothreadMonitor(MonitorClient):
 
     def callback(self, value, index):
         pv_name = self._pv_names[index]
-        self.add_sample(pv_name, value, value.timestamp, value.severity)
+        super().callback(pv_name)
+        
+        if self.is_active:
+            self.add_sample(pv_name, value, value.timestamp, value.severity)
 
     def close(self):
         import cothread

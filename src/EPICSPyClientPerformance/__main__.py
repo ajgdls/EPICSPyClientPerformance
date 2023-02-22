@@ -1,6 +1,8 @@
 import argparse
 import logging
 import math
+import time
+from datetime import datetime
 
 import psutil
 
@@ -39,9 +41,15 @@ def options():
         help="Number of samples per monitor to collect (100)",
     )
     parser.add_argument(
+        "-u",
+        "--update",
+        default=0.1,
+        help="Sample update period in seconds (0.1)"
+    )
+    parser.add_argument(
         "-c",
         "--client",
-        choices=["pyepics", "caproto", "aioca", "p4p", "pvapy", "cothread"],
+        choices=["pyepics", "caproto", "aioca", "p4p", "p4pasync", "p4pcothread", "pvapy", "cothread"],
         default="pyepics",
         help="Client type to test",
     )
@@ -54,6 +62,8 @@ def main():
     logging.basicConfig(format="%(asctime)s %(message)s", level=args.debug)
     args.records = int(args.records)
     test_samples = int(args.samples)
+    total_samples = test_samples * args.records
+    update_freq = 1/float(args.update)
 
     # Simple argh check to choose which test to run
     mon = None
@@ -73,6 +83,14 @@ def main():
         from EPICSPyClientPerformance.p4p_monitor import P4PMonitor
 
         mon = P4PMonitor()
+    elif args.client == "p4pasync":
+        from EPICSPyClientPerformance.p4p_async_monitor import P4PMonitorAsync
+
+        mon = P4PMonitorAsync()
+    elif args.client == "p4pcothread":
+        from EPICSPyClientPerformance.p4p_cothread_monitor import P4PCothreadMonitor
+
+        mon = P4PCothreadMonitor()
     elif args.client == "pvapy":
         from EPICSPyClientPerformance.pvapy_monitor import PvapyMonitor
 
@@ -84,20 +102,30 @@ def main():
 
     process = psutil.Process()
     cpu_samples = []
+    
     # Now run the camonitor process until the correct number of samples
     # have been collected
     mon.monitor_pv(args.prefix, args.records, test_samples)
-    monitors_completed = False
 
+    # Sleep long enough for the monitors to all be established
+    #time.sleep(15)
+         
     # Sample CPU here a couple of times and throw away so that we don't
     # include any module import or setting up in the CPU monitoring
     for i in range(2):
         cpu = process.cpu_percent(interval=1)
-
+    
+    # Activate the monitors to start saving data
+    mon.activate()
+    monitors_completed = False
+    iteration = 0
+        
     while monitors_completed is False:
         cpu = process.cpu_percent(interval=1)
         cpu_samples.append(cpu)
+        iteration = iteration+1
         samples_collected = 0
+        expected_samples = min(update_freq * args.records * iteration, total_samples)
         monitors_completed = True
         value_store = mon.results
         pv_names = mon.pv_names
@@ -108,6 +136,17 @@ def main():
                 if len(value_store[pv_name]) < test_samples:
                     monitors_completed = False
                 samples_collected += len(value_store[pv_name])
+
+        if mon.connected_counter < args.records:
+            logging.warn(
+                "Warning: {} records not yet connected".format(
+                    args.records-mon.connected_counter)
+            )
+        if (samples_collected < expected_samples):
+            logging.warn(
+                "Monitor backlog detected: {} samples behind expected number".format(
+                    int(expected_samples-samples_collected))
+            )
         logging.info(
             "Snapshot CPU [{}] Collected {} out of {} total samples".format(
                 cpu, samples_collected, test_samples * len(pv_names)
@@ -161,6 +200,15 @@ def main():
 
     logging.info("Completed verification, errors: {}".format(errors_counted))
     logging.info("CPU: Mean {} [STD {}]".format(cpu_mean, cpu_std))
+    
+    # Log the time difference between the first PV to start receiving callbacks and the last
+    min_time = min([value_store[pv_name][0]["timestamp"] for pv_name in pv_names])
+    max_time = max([value_store[pv_name][0]["timestamp"] for pv_name in pv_names])
+    time_difference = datetime.fromtimestamp(max_time) - datetime.fromtimestamp(min_time)
+    logging.info("Maximum timestamp difference between first samples: {} seconds".format(
+        time_difference.total_seconds()
+        )
+    )
 
     # Shut down the monitors and clean up
     mon.close()
