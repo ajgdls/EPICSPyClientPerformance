@@ -28,8 +28,8 @@ Execution
 =========
 
 The test creates a set of monitors for the chosen client type to monitor a
-set of calcout records that are incrementing their value by 1 at a rate of
-10 Hz.  An example IOC that contains the required records can be started
+set of calcout records that are incrementing their value by 1 at a specified
+rate (default 10Hz).  An example IOC that contains the required records can be started
 with the following command:
 
 
@@ -53,8 +53,27 @@ The IOC will start with the number of records specified and each record
 will count up at a rate of 10 Hz.  The severity of each record will
 immediately fall into MINOR alarm.
 
+An alternative implementation of the IOC which processes records at an arbitrary
+rate can be started with the following command:
 
-Once the IOC is operational run the client with the following command:
+.. code-block:: bash
+
+    ioc_fast_updates -h
+    usage: ioc_fast_updates [-h] [--version] [--debug {CRITICAL,ERROR,WARNING,INFO,DEBUG,NOTSET}] [-r RECORDS] [-p PREFIX] [-s SCAN]
+
+    optional arguments:
+    -h, --help            show this help message and exit
+    --version             show program's version number and exit
+    --debug {CRITICAL,ERROR,WARNING,INFO,DEBUG,NOTSET}
+                            Set the debug level (INFO)
+    -r RECORDS, --records RECORDS
+                            Number of records to create (1000)
+    -p PREFIX, --prefix PREFIX
+                            Record name prefix (TEST:)
+    -s SCAN, --scan SCAN    Update rate in seconds (1)
+
+
+Once one of the IOCs is operational, run the client with the following command:
 
 
 .. code-block:: bash
@@ -74,7 +93,9 @@ Once the IOC is operational run the client with the following command:
                             Record name prefix (TEST:CALC)
     -s SAMPLES, --samples SAMPLES
                             Number of samples per monitor to collect (100)
-    -c {pyepics,caproto,aioca,p4p,pvapy,cothread}, --client {pyepics,caproto,aioca,p4p,pvapy,cothread}
+    -u UPDATE, --update UPDATE
+                            Sample update period in seconds (0.1)
+    -c {pyepics,caproto,aioca,p4p,p4pasync,p4pcothread,pvapy,cothread}, --client {pyepics,caproto,aioca,p4p,p4pasync,p4pcothread,pvapy,cothread}
                             Client type to test
 
 

@@ -1,9 +1,12 @@
 from functools import partial
+import logging
 
 from p4p.client.thread import Context
 
 from EPICSPyClientPerformance.monitor_client import MonitorClient
 
+#logging.getLogger("p4p").setLevel("INFO")
+#logging.getLogger("p4p.client.thread").setLevel("DEBUG")
 
 class P4PMonitor(MonitorClient):
     def __init__(self):
@@ -17,7 +20,10 @@ class P4PMonitor(MonitorClient):
             self._subscriptions.append(self._ctxt.monitor(pv_name, cb))
 
     def callback(self, pv_name, value):
-        self.add_sample(pv_name, value, value.timestamp, value.severity)
+        super().callback(pv_name)
+            
+        if (self.is_active):
+            self.add_sample(pv_name, value, value.timestamp, value.severity)
 
     def close(self):
         for sub in self._subscriptions:
