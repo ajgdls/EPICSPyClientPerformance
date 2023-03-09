@@ -49,7 +49,7 @@ def options():
     parser.add_argument(
         "-c",
         "--client",
-        choices=["pyepics", "caproto", "aioca", "p4p", "p4pasync", "p4pcothread", "pvapy", "cothread"],
+        choices=["pyepics", "caproto", "aioca", "p4p", "p4pasync", "p4pcothread", "pvapy", "cothread", "cachannel", "cachannel.ca"],
         default="pyepics",
         help="Client type to test",
     )
@@ -99,6 +99,14 @@ def main():
         from EPICSPyClientPerformance.cothread_monitor import CothreadMonitor
 
         mon = CothreadMonitor()
+    elif args.client == "cachannel":
+        from EPICSPyClientPerformance.cachannel_monitor import CaChannelMonitor
+
+        mon = CaChannelMonitor()
+    elif args.client == "cachannel.ca":
+        from EPICSPyClientPerformance.cachannel_ca_monitor import CaChannelCaMonitor
+
+        mon = CaChannelCaMonitor()
 
     process = psutil.Process()
     cpu_samples = []
