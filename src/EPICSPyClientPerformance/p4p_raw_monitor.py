@@ -18,9 +18,9 @@ class Callback:
             value = self.subscription.pop()
 
 
-class P4PMonitor(MonitorClient):
+class P4PRawMonitor(MonitorClient):
     def __init__(self):
-        super(P4PMonitor, self).__init__()
+        super(P4PRawMonitor, self).__init__()
         self._subscriptions = []
         self._ctxt = Context("pva", nt=False)
 
